@@ -1,0 +1,53 @@
+CILO - CiscoLoad Sane Bootloader for real ELF Files
+
+1. What is this?
+CILO, or CiscoLoad is a ROMMON bootloader replacement for Cisco Routers.
+The ROMMON bootloader will load CILO, which then can be used to boot IOS
+or an alternative operating system.
+
+2. Why do I need this?
+The ROMMON bootloader is extremely broken -- it is only capable of 
+understanding a single ELF segment in an ELF file. Of course, because Linux
+and other operating systems rely fairly heavily on being able to have more
+than one segment in the output ELF file, this clearly isn't acceptable.
+
+3. How do I build CILO?
+Assuming you have a mips-elf toolchain installed (how to do this is beyond
+the scope of this document, but it should be simple to do. Just remember the
+target architecture is mips-elf and not mips-unknown-linux-gnu), just go
+to the root directory of the source distribution and type make. Everything
+should build from there.
+
+Next, build the second stage bootloader by going to the second/ directory 
+and typing make.
+
+Copy the ciscoload.bin and ciscoload.two files to the router's flash along
+with your kernel and set the router boot image to be ciscoload.bin.
+
+4. How do I use CILO?
+Assuming you have one of the supported routers, it is really quite easy. 
+In short, you must build CiscoLoad, build the stage-two loader and copy 
+them to your device's flash, typically using IOS.
+
+When the router boots, it will load CILO; CILO then will prompt you to 
+select the file you want to boot. Enter the file name you wish to boot, and 
+away you go!
+
+5. What hardware is supported?
+At this time, the Cisco 3600 Series of routers (3620 and 3640 at least) are
+very well supported. As well, preliminary support is underway for the 
+Cisco 1700 Series routers.
+
+6. What is ELFTool?
+ELFTool is a small app that can be used to analyze ELF32 files. It is used 
+as a test case for the elf.h header and the ELF reading support in 
+CiscoLoad. To build it, go to the elftool/ directory in the source dist-
+ribution, and type make.
+
+7. Who wrote CiscoLoad?
+CiscoLoad was the result of many wasted hours of Phil Vachon, who can be
+reached at philippe@cowpig.ca.
+
+8. What License is CiscoLoad shipped under
+While CiscoLoad is a simple piece of software, the code is covered under the
+GNU General Public License version 2.

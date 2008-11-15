@@ -1,0 +1,4 @@
+1. Add support for multiple classes of mass storage
+    -> support for ATA Flash (i.e. 3725, 7200 series, etc...)
+    -> support for linear PCMCIA Flash (i.e. 3600 series)
+    -> support for multiple devices

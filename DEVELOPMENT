@@ -1,0 +1,24 @@
+1. Adding a new platform
+    0) Create a mach/${PLATFORM} directory, which must contain the platform-
+       specific I/O routines for user interface and filesystem access.
+    1) Specify platform storage types, setup platform specific access methods
+       and strategies, or fall back on the defaults
+    2) Create platform-specific c_putc, c_getc, c_memsz
+    3) Create a platform_init() method; this will be the first method to be
+       called from start_bootloader(). This must register platform-specific
+    4) Build up any re-usable peripheral methods required - for example, if
+       your platform requires a new filesystem class (that may be seen in
+       other platforms), please add support for it in filesys.
+
+2. Directory Structure
+    -> / - entry points, simple, common code
+       -> storage/ - the storage manager registering multiple storage classes
+       -> console/ - console I/O drivers
+       -> net/ - networking code (future)
+       -> mach/ - machine-specific code
+          -> c3600 - support for the Cisco 3600 Series
+          -> c1750 - support for the Cisco 1750 Series
+          -> c3725 - support for the Cisco 3725 Multiservice Router
+       -> include/ - headers for generic code
+
+3.
