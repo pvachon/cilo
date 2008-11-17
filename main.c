@@ -175,12 +175,9 @@ enter_filename:
     const char *cmd_line_append;
     if ((cmd_line_append = strchr(buf, ' ')) != NULL) {
         strcpy(cmd_line, (char *)(cmd_line_append + 1));
-        printf("DEBUG: Command line: [%s]\n");
         /* extract the kernel file name now */
         uint32_t kernel_name_len = cmd_line_append - buf;
-        printf("DEBUG: kernel name is %d bytes long\n", kernel_name_len);
         strncpy(kernel, buf, kernel_name_len);
-        printf("DEBUG: kernel name is %s\n", kernel);
         kernel[kernel_name_len + 1] = '\0';
     } else {
         cmd_line[0] = '\0';

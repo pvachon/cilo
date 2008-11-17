@@ -167,7 +167,7 @@ int load_elf32_file(uint32_t base, uint32_t loader_addr)
 #endif
 
     /* Jump to the copy routine */
-    asm (".set noreorder\n"
+/*    asm (".set noreorder\n"
          "move $k0, %[bootcpy]\n"
          "move $a0, %[kdataoffset]\n"
          "move $a1, %[kdatalength]\n"
@@ -175,12 +175,16 @@ int load_elf32_file(uint32_t base, uint32_t loader_addr)
          "move $a3, %[kloadoffset]\n"
          "jr $k0\n"
          " nop\n"
-         : /* no outputs */
+         : 
          : [bootcpy] "r"(loader_addr), [kdataoffset] "r"(load_offset),
            [kdatalength] "r"(mem_sz), [kentrypt]"r"(hdr.entry),
            [kloadoffset] "r"(hdr.entry)
          : "k0", "a0", "a1", "a2", "a3"
-    );
+    ); */
+
+    ((void (*)(uint32_t data_offset, uint32_t data_length, uint32_t entry_pt, 
+        uint32_t load_offset)) (loader_addr))
+        (load_offset, mem_sz, hdr.entry, hdr.entry);
 
     return -1; /* something failed, badly */
 }
