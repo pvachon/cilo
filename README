@@ -11,6 +11,10 @@ understanding a single ELF segment in an ELF file. Of course, because Linux
 and other operating systems rely fairly heavily on being able to have more
 than one segment in the output ELF file, this clearly isn't acceptable.
 
+CiscoLoad works around this by providing an ELF file that looks somewhat
+like an IOS image to ROMMON; from CiscoLoad, it is then possible to load an
+arbitrary standalone ELF file, such as a kernel image, or even an IOS image.
+
 3. How do I build CILO?
 Assuming you have a mips-elf toolchain installed (how to do this is beyond
 the scope of this document, but it should be simple to do. Just remember the
@@ -47,6 +51,8 @@ ribution, and type make.
 7. Who wrote CiscoLoad?
 CiscoLoad was the result of many wasted hours of Phil Vachon, who can be
 reached at philippe@cowpig.ca.
+
+The printf function was gracelessly lifted from the Linux Kernel.
 
 8. What License is CiscoLoad shipped under
 While CiscoLoad is a simple piece of software, the code is covered under the

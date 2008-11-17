@@ -63,6 +63,6 @@ ${PROG}: ${OBJECTS}
 	${CC} ${CFLAGS} ${ASFLAGS} -c $<
 
 clean:
-	rm *.o
-	rm ${PROG}.elf
-	rm ${PROG}.bin
+	-rm *.o
+	-rm ${PROG}.elf
+	-rm ${PROG}.bin
