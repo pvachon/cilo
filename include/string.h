@@ -95,8 +95,10 @@ inline const char *strchr(const char *s, int c)
 {
     const char *ptr = s;
 
+    if (*ptr == (char)c) return ptr;
+
     while (*ptr != '\0') {
-        if (*(ptr++) == (char)c) {
+        if (*(++ptr) == (char)c) {
             return ptr;
         }
     }

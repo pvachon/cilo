@@ -132,8 +132,10 @@ void start_bootloader()
     int f;
     char buf[129];
     char *cmd_line = (char *)MEMORY_BASE;
+    char kernel[49];
 
     buf[128] = '\0';
+    kernel[48] = '\0';
 
     /* determine amount of RAM present */
     c_putc('I');
@@ -172,14 +174,22 @@ enter_filename:
     /* determine if a command line string has been appended to kernel name */
     const char *cmd_line_append;
     if ((cmd_line_append = strchr(buf, ' ')) != NULL) {
-        strcpy(cmd_line, cmd_line_append);
+        strcpy(cmd_line, (char *)(cmd_line_append + 1));
+        printf("DEBUG: Command line: [%s]\n");
+        /* extract the kernel file name now */
+        uint32_t kernel_name_len = cmd_line_append - buf;
+        printf("DEBUG: kernel name is %d bytes long\n", kernel_name_len);
+        strncpy(kernel, buf, kernel_name_len);
+        printf("DEBUG: kernel name is %s\n", kernel);
+        kernel[kernel_name_len + 1] = '\0';
     } else {
         cmd_line[0] = '\0';
+        strncpy(kernel, buf, 48);
     }
 
-    printf("\n\nAttempting to load file %s\n", buf);
+    printf("\n\nAttempting to load file %s\n", kernel);
 
-    uint32_t kernel_off = find_file(buf, FLASH_BASE);
+    uint32_t kernel_off = find_file(kernel, FLASH_BASE);
     uint32_t loader_off = find_file("ciscoload.two", FLASH_BASE);
 
     if (loader_off == 0) {
@@ -189,9 +199,9 @@ enter_filename:
     }
     
     if (kernel_off == 0) {
-        printf("Unable to find \"%s\" on the flash filesystem.\n", buf);
+        printf("Unable to find \"%s\" on the flash filesystem.\n", kernel);
     } else {
-        printf("Booting \"%s\" from flash at 0x%08x\n", buf, 
+        printf("Booting \"%s\" from flash at 0x%08x\n", kernel, 
             FLASH_BASE + kernel_off);
         printf("DEBUG: cmd_line: %s\n", cmd_line);
         if (load_elf32_file(FLASH_BASE + kernel_off, FLASH_BASE + loader_off) 
