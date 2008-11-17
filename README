@@ -37,6 +37,8 @@ When the router boots, it will load CILO; CILO then will prompt you to
 select the file you want to boot. Enter the file name you wish to boot, and 
 away you go!
 
+Of course, it makes sense to put your kernel on your flash device as well.
+
 5. What hardware is supported?
 At this time, the Cisco 3600 Series of routers (3620 and 3640 at least) are
 very well supported. As well, preliminary support is underway for the 

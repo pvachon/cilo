@@ -88,4 +88,20 @@ inline int memcpy(void *dst, const void *src, int n)
     return i;
 }
 
+/**
+ * strchr
+ */
+inline const char *strchr(const char *s, int c)
+{
+    const char *ptr = s;
+
+    while (*ptr != '\0') {
+        if (*(ptr++) == (char)c) {
+            return ptr;
+        }
+    }
+
+    return NULL;
+}
+
 #endif /* _STRING_H */

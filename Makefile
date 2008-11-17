@@ -35,10 +35,12 @@ AR=$(CROSS_COMPILE)ar
 LD=$(CROSS_COMPILE)ld
 OBJCOPY=$(CROSS_COMPILE)objcopy
 
+MACHDIR=mach/$(TARGET)
+
 # command to prepare a binary
 RAW=${OBJCOPY} --strip-unneeded --alt-machine-code ${MACHCODE}
 
-INCLUDE=-Iinclude/ -Imach/${TARGET}
+INCLUDE=-Iinclude/ -Imach/${TARGET} -Iinclude/mach/${TARGET}
 
 CFLAGS=$(INCLUDE) -fno-builtin -fomit-frame-pointer -fno-pic -mno-abicalls \
 	-Wall
@@ -48,12 +50,18 @@ ASFLAGS=-xassembler-with-cpp -traditional-cpp
 LDFLAGS=--omagic -nostartfiles -nostdlib --discard-all --strip-all \
 	-Ttext ${TEXTADDR} --entry _start
 
-OBJECTS=start.o main.o printf.o promlib.o elf_loader.o
+OBJECTS=main.o printf.o elf_loader.o
+
+LINKOBJ=${OBJECTS} $(MACHDIR)/promlib.o $(MACHDIR)/start.o #$(MACHDIR)/platform.o
+
+
+THISFLAGS='LDFLAGS=$(LDFLAGS)' 'ASFLAGS=$(ASFLAGS)' \
+	'CROSS_COMPILE=$(CROSS_COMPILE)' 'CFLAGS=$(CFLAGS)' 'CC=$(CC)'
 
 all: ${OBJECTS} ${PROG}
 
-${PROG}: ${OBJECTS}
-	${CC} ${LDFLAGS} ${OBJECTS} -o ${PROG}.elf
+${PROG}: sub ${OBJECTS}
+	${CC} ${LDFLAGS} ${LINKOBJ} -o ${PROG}.elf
 	${RAW} ${PROG}.elf ${PROG}.bin
 
 .c.o:
@@ -61,8 +69,20 @@ ${PROG}: ${OBJECTS}
 
 .S.o:
 	${CC} ${CFLAGS} ${ASFLAGS} -c $<
+	
+sub:
+	@for i in $(MACHDIR); do \
+	echo "Making all in $$i..."; \
+	(cd $$i; $(MAKE) $(MFLAGS) $(THISFLAGS) all); done
+	(cd second/; $(MAKE) $(MFLAGS))
 
-clean:
-	-rm *.o
-	-rm ${PROG}.elf
-	-rm ${PROG}.bin
+subclean:
+	@for i in $(MACHDIR); do \
+	echo "Cleaning all in $$i..."; \
+	(cd $$i; $(MAKE) $(MFLAGS) clean); done
+	(cd second/; $(MAKE) $(MFLAGS) clean)
+
+clean: subclean
+	-rm -f *.o
+	-rm -f ${PROG}.elf
+	-rm -f ${PROG}.bin

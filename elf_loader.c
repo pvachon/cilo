@@ -2,6 +2,9 @@
 #include <promlib.h>
 #include <printf.h>
 
+/* platform-specific defines */
+#include <platform.h>
+
 
 void read(void *ptr, uint32_t size, uint32_t count, uint32_t base, 
     uint32_t offset);
@@ -19,12 +22,8 @@ void load_elf32_section(uint32_t base, uint32_t address,
 {
     uint8_t *elf_loc = (uint8_t *)address;
 
-    printf("read(%08x, %08x, 1, %08x, %08x);\n",
-        address, length, base, file_offset);
-
     read(elf_loc, length, 1, base, file_offset); 
 
-    printf("Read %d bytes into memory at location %#8x.\n", length, address);
 }
 
 /**
@@ -40,8 +39,6 @@ void load_elf32_uninitialized_memory(uint32_t address, uint32_t length)
     for (i = 0; i < length; i++) {
         p[i] = 0;
     }
-    printf("Created uninitialized data section of %d bytes at %#8x.\n", i,
-        address);
 }
 
 /**
@@ -147,11 +144,11 @@ int load_elf32_file(uint32_t base, uint32_t loader_addr)
         if (phdr.type != ELF_PT_LOAD) continue;
 
         uint32_t leftover = phdr.memsz - phdr.filesz;
-        load_elf32_section(base, mem_sz + hdr.entry + phdr.paddr,
+        load_elf32_section(base, mem_sz + phdr.paddr,
             phdr.offset, phdr.filesz);
 
         if (leftover > 0) {
-            load_elf32_uninitialized_memory(mem_sz + hdr.entry + phdr.paddr +
+            load_elf32_uninitialized_memory(mem_sz + phdr.paddr +
                 phdr.filesz, leftover);
         }
     }
@@ -161,66 +158,13 @@ int load_elf32_file(uint32_t base, uint32_t loader_addr)
 
     printf("Loaded %d bytes at %08x.\n", mem_sz, load_offset);
 
-    /* struct elf32_section_header shdr; */
-
-    /* read in section headers, load sections */
-#if 0
-    uint32_t sh_offset = hdr.shoff;
-    for (i = 0; i < hdr.shnum; i++) {
-        printf("reading: base: %08x, sh_offset: %08x\n", base, sh_offset);
-        read(&shdr, sizeof(struct elf32_section_header), 1, base, sh_offset);
-
-        printf("\n\nJust read section header %d\n", i);
-
-        printf("\tName: %u\n", shdr.name);
-        printf("\tType: %#8x: %s\n", shdr.type, sh_type_to_string(shdr.type));
-        printf("\tFlags: %#8x\n", shdr.flags);
-        printf("\t\t%c%c%c\n", ELF_SHF_ALLOCD(shdr.flags) ? 'A' : '-',
-            ELF_SHF_WRITABLE(shdr.flags) ? 'w' : '-',
-            ELF_SHF_EXECUTABLE(shdr.flags) ? 'x' : '-');
-        printf("\tAddress: %#8x\n", shdr.addr);
-        printf("\tOffset: %u bytes\n", shdr.offset);
-        printf("\tSize: %u bytes\n", shdr.size);
-        printf("\tLink: %#8x\n", shdr.link);
-        printf("\tAdditional Info: %#8x\n", shdr.info);
-        printf("\tAddress Alignment: %#8x\n", shdr.addralign);
-        printf("\tPer-Entry Size: %u bytes\n\n", shdr.entsize);
-
-        if (!ELF_SHF_ALLOCD(shdr.flags)) {
-            sh_offset += sizeof(struct elf32_section_header);
-            continue;
-        }
-
-        printf("Param: base: %08x addr: %08x offset: %08x size: %08x\n",
-            base, shdr.addr, shdr.offset, shdr.size);
-
-        /* load section */
-        switch (shdr.type) {
-        case ELF_SHT_NULL: /* no data to be loaded */
-            break;
-        case ELF_SHT_NOBITS:
-            /* zero out this data */
-            load_elf32_uninitialized_memory(shdr.addr + mem_sz, 
-                shdr.size);
-            break;
-        case ELF_SHT_PROGBITS:
-            /* program bits and such */
-            load_elf32_section(base, shdr.addr + mem_sz, shdr.offset, 
-                shdr.size);
-            break;
-        default:
-            printf("WARNING: Section type %08x cannot be loaded by " 
-                "CiscoLoad.\n", shdr.type);
-        }
-
-        sh_offset += sizeof(struct elf32_section_header);
-    }
-#endif
-
     printf("Kicking into Linux.\n");
+
+#ifdef DEBUG
     printf("bootcpy: %08x, kdataoffset: %08x, kdatalength: %08x\n",
         loader_addr, load_offset, mem_sz);
     printf("kentrypt: %08x, kloadoffset: %08x\n", hdr.entry, hdr.entry);
+#endif
 
     /* Jump to the copy routine */
     asm (".set noreorder\n"

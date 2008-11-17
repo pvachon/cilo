@@ -12,5 +12,5 @@ elftool: $(OBJECTS)
 	gcc $(CFLAGS) -c $<
 
 clean:
-	rm *.o
-	rm $(PROG)
+	-rm -f *.o
+	-rm -f $(PROG)

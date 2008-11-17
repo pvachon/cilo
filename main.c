@@ -2,18 +2,15 @@
  * (c) 2008 Philippe Vachon <philippe@cowpig.ca>
  * Licensed under the GNU General Public License v2
  */
-#include <promlib.h>
 #include <printf.h>
 #include <addr.h>
 #include <elf.h>
 #include <elf_loader.h>
 #include <string.h>
+#include <promlib.h>
 
-/**
- * Todo: Add these to platform-specific header
- */
-#define FLASH_BASE 0x30000000
-#define KERNEL_ENTRY_POINT 0x80008000
+/* platform-specific defines */
+#include <platform.h>
 
 #define FS_FILE_MAGIC 0xbad00b1e
 
@@ -133,7 +130,10 @@ void start_bootloader()
 {
     int r = 0;
     int f;
-    char buf[48];
+    char buf[129];
+    char *cmd_line = (char *)MEMORY_BASE;
+
+    buf[128] = '\0';
 
     /* determine amount of RAM present */
     c_putc('I');
@@ -164,8 +164,19 @@ void start_bootloader()
 
     printf("Available files:\n");
     flash_directory(FLASH_BASE);
+
+enter_filename:
     printf("\nEnter filename to boot:\n> ");
-    c_gets(buf, 48);
+    c_gets(buf, 128);
+    
+    /* determine if a command line string has been appended to kernel name */
+    const char *cmd_line_append;
+    if ((cmd_line_append = strchr(buf, ' ')) != NULL) {
+        strcpy(cmd_line, cmd_line_append);
+    } else {
+        cmd_line[0] = '\0';
+    }
+
     printf("\n\nAttempting to load file %s\n", buf);
 
     uint32_t kernel_off = find_file(buf, FLASH_BASE);
@@ -182,12 +193,14 @@ void start_bootloader()
     } else {
         printf("Booting \"%s\" from flash at 0x%08x\n", buf, 
             FLASH_BASE + kernel_off);
+        printf("DEBUG: cmd_line: %s\n", cmd_line);
         if (load_elf32_file(FLASH_BASE + kernel_off, FLASH_BASE + loader_off) 
             < 0) 
         {
             printf("Fatal error while loading kernel. Aborting.\n");
         }
     }
+    goto enter_filename;
 
     /* return to ROMMON */
 }

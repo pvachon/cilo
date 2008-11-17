@@ -25,7 +25,21 @@ LEAF(_start)
     bnez a1, 1b     # continue copying
      addi a1, -4     # subtract from remaining bytes to copy
 
-     nop
+    nop
+    
+    /* put the stack pointer up at top of memory */
+    li a0, 4
+    syscall
+    nop
+
+    li sp, 0x80000000
+    add sp, sp, v0
+
+    move a0, v0
+    li a1, 0x80000000
+    li a3, 0
+    li v0, 0
+
     
     jr a2           # jump to kernel entry point
      nop
