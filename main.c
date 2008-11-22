@@ -6,16 +6,16 @@
 #include <addr.h>
 #include <elf.h>
 #include <elf_loader.h>
-#include <string.h>
+#include <ciloio.h>
 #include <promlib.h>
 
 /* platform-specific defines */
 #include <platform.h>
 
-#define FS_FILE_MAGIC 0xbad00b1e
+#include <string.h>
 
 /**
- * Dump 0x10 bytes of RAM in canonical hexadecimal form
+ * Dump 0x10 bytes of memory in canonical hexadecimal form
  * @param addr Starting address to dump from
  */
 void hex_dump(uint32_t addr)
@@ -38,91 +38,6 @@ void hex_dump(uint32_t addr)
 
 }
 
-struct fs_ent {
-    uint32_t magic;
-    uint32_t length;
-    /* guesses -- one of these is probably a CRC16 + flags */
-    uint32_t crc32; /* ? */
-    uint32_t date; /* ? */
-    char filename[48];
-};
-
-/** 
- * Check the sanity of flash -- just look for the filesystem magic number
- * in the first 4 bytes of flash
- * @param base base address of flash
- * @returns 0 on failure, 1 on success
- */
-int check_flash(uint32_t base)
-{
-    uint32_t *ptr = (uint32_t *)base;
-
-    if (*ptr != FS_FILE_MAGIC) {
-        return 0;
-    }
-
-    return 1;
-}
-
-
-/**
- * Find file in flash.
- * @param filename Name of the kernel ELF file to be loaded.
- * @param base Base address of flash
- * @returns offset of the file within the flash memory space.
- */
-uint32_t find_file(const char *filename, uint32_t base)
-{
-    /* Actual file offset */
-    uint32_t offset = 0;
-
-    uint32_t file_offset = 0;
-
-    struct fs_ent *f = (struct fs_ent *)(base + offset);
-
-    /* iterate over files in flash */
-    while (f->magic == FS_FILE_MAGIC) {
-        if (!strncmp(f->filename, filename, 48)) {
-            file_offset = offset + sizeof(struct fs_ent);
-            break;
-        }
-
-        offset += sizeof(struct fs_ent) + f->length;
-        f = (struct fs_ent *)(base + offset);
-    }
-
-    return file_offset;
-}
-
-/**
- * Print a directory listing of all files in flash
- * @param base Base address of flash
- */
-void flash_directory(uint32_t base)
-{
-    struct fs_ent *f = (struct fs_ent *)base;
-    uint32_t offset = 0;
-
-    /* Iterate over the files; f->magic is 0 if an invalid file is
-     * found.
-     */
-    while (f->magic == FS_FILE_MAGIC) {
-        printf("%s\n", f->filename);
-        offset += sizeof(struct fs_ent) + f->length;
-        f = (struct fs_ent *)(base + offset);
-    }
-}
-
-/**
- * Locate the stage two loader.
- * @param base Flash base.
- * @return address of stage two loader
- */
-uint32_t locate_stage_two(uint32_t base) 
-{
-    return find_file("ciscoload.two", base);
-}
-
 /**
  * Entry Point for CiscoLoad
  */
@@ -133,6 +48,7 @@ void start_bootloader()
     char buf[129];
     char *cmd_line = (char *)MEMORY_BASE;
     char kernel[49];
+    const char *cmd_line_append;
 
     buf[128] = '\0';
     kernel[48] = '\0';
@@ -145,7 +61,7 @@ void start_bootloader()
     /* check flash filesystem sanity */
     c_putc('L');
 
-    f = check_flash(FLASH_BASE);
+    f = check_flash();
     
     if (!f) {
         printf("\nError: Unable to find any valid flash! Aborting load.\n");
@@ -153,9 +69,10 @@ void start_bootloader()
     }
 
     c_putc('O');
+    platform_init();
 
     /* locate the stage two loader */
-    if (!locate_stage_two(FLASH_BASE)) {
+    if (!locate_stage_two()) {
         printf("\nError: Unable to find valid stage two loader. "
             "Aborting load.\n");
         return;
@@ -165,14 +82,13 @@ void start_bootloader()
     printf("Available RAM: %d kB\n", r);
 
     printf("Available files:\n");
-    flash_directory(FLASH_BASE);
+    flash_directory();
 
 enter_filename:
     printf("\nEnter filename to boot:\n> ");
     c_gets(buf, 128);
     
     /* determine if a command line string has been appended to kernel name */
-    const char *cmd_line_append;
     if ((cmd_line_append = strchr(buf, ' ')) != NULL) {
         strcpy(cmd_line, (char *)(cmd_line_append + 1));
         /* extract the kernel file name now */
@@ -186,22 +102,16 @@ enter_filename:
 
     printf("\n\nAttempting to load file %s\n", kernel);
 
-    uint32_t kernel_off = find_file(kernel, FLASH_BASE);
-    uint32_t loader_off = find_file("ciscoload.two", FLASH_BASE);
+    struct file kernel_file = cilo_open(kernel);
 
-    if (loader_off == 0) {
-        printf("Unable to find the second stage loader. Please copy the "
-            "second\nstage loader to the flash filesystem (ciscoload.two).");
-        return;
-    }
-    
-    if (kernel_off == 0) {
+    if (kernel_file.code == 0) {
         printf("Unable to find \"%s\" on the flash filesystem.\n", kernel);
     } else {
-        printf("Booting \"%s\" from flash at 0x%08x\n", kernel, 
-            FLASH_BASE + kernel_off);
+#ifdef DEBUG
         printf("DEBUG: cmd_line: %s\n", cmd_line);
-        if (load_elf32_file(FLASH_BASE + kernel_off, FLASH_BASE + loader_off) 
+#endif
+        printf("Booting %s.\n");
+        if (load_elf32_file(&kernel_file) 
             < 0) 
         {
             printf("Fatal error while loading kernel. Aborting.\n");

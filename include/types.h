@@ -2,6 +2,7 @@
 #define _TYPES_H
 
 /* define some convenience types */
+#define NULL 0
 
 typedef unsigned char uint8_t;
 typedef char int8_t;

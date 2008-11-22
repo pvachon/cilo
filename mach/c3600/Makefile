@@ -2,7 +2,7 @@ ifndef CROSS_COMPILE
 CROSS_COMPILE=mips-elf-
 endif
 
-OBJECTS=start.o promlib.o
+OBJECTS=start.o promlib.o platform.o platio.o
 
 INCLUDE=-I../../include
 

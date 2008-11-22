@@ -1,13 +1,18 @@
+/**
+ * CILO Elf Loader
+ * (c) 2008 Philippe Vachoon <philippe@cowpig.ca>
+ *
+ * Licensed under the GNU General Public License v2. See COPYING
+ * in the distribution source directory for more information.
+ */
 #include <elf.h>
 #include <promlib.h>
 #include <printf.h>
+#include <ciloio.h>
 
 /* platform-specific defines */
 #include <platform.h>
 
-
-void read(void *ptr, uint32_t size, uint32_t count, uint32_t base, 
-    uint32_t offset);
 
 /**
  * load a single ELF section into memory at address. Assumes ELF data is
@@ -17,12 +22,12 @@ void read(void *ptr, uint32_t size, uint32_t count, uint32_t base,
  * @param file_offset offset (in bytes) in the ELF file where the section is
  * @param length Length of the section (in bytes)
  */
-void load_elf32_section(uint32_t base, uint32_t address, 
+void load_elf32_section(struct file *fp, uint32_t address, 
     uint32_t file_offset, uint32_t length)
 {
     uint8_t *elf_loc = (uint8_t *)address;
-
-    read(elf_loc, length, 1, base, file_offset); 
+    cilo_seek(fp, file_offset, SEEK_SET);
+    cilo_read(elf_loc, length, 1, fp); 
 
 }
 
@@ -42,27 +47,6 @@ void load_elf32_uninitialized_memory(uint32_t address, uint32_t length)
 }
 
 /**
- * Read data into a given pointer
- * @param ptr Pointer to write data out to
- * @param size Size of the data to be read
- * @param count number of elements to read
- * @param base base address to start read from
- * @param offset offset from base to read from
- */
-void read(void *ptr, uint32_t size, uint32_t count, uint32_t base, 
-    uint32_t offset)
-{
-    uint8_t *data = (uint8_t *)ptr;
-    uint8_t *src = (uint8_t *)(base + offset);
-    int i;
-
-    for (i = 0; i < size * count; i++) {
-        data[i] = src[i];
-    }
-
-}
-
-/**
  * Load an ELF file into memory from the given base. Loads at
  * offset + image_size so that a later memcpy routine can be used to copy
  * things into RAM and then kick off the boot process.
@@ -70,14 +54,14 @@ void read(void *ptr, uint32_t size, uint32_t count, uint32_t base,
  * @param loader_addr address of the loader binary in memory
  * @return  
  */
-int load_elf32_file(uint32_t base, uint32_t loader_addr)
+int load_elf32_file(struct file *fp)
 {
     struct elf32_header hdr;
 
     uint32_t mem_sz = 0;
 
     /* read in header entries */
-    read(&hdr, sizeof(struct elf32_header), 1, base, 0);
+    cilo_read(&hdr, sizeof(struct elf32_header), 1, fp);
 
     /* check the file magic */
     if (hdr.ident[0] != ELF_MAGIC_1 || hdr.ident[1] != ELF_MAGIC_2 ||
@@ -121,36 +105,39 @@ int load_elf32_file(uint32_t base, uint32_t loader_addr)
 
     int i;
     struct elf32_phdr phdr;
-    uint32_t ph_offset = hdr.phoff;
 
+    cilo_seek(fp, hdr.phoff, SEEK_SET);
     /* read in program header(s), determine total memory size of image */
     /* TODO: figure out if there's a better way to determine this */
     for (i = 0; i < hdr.phnum; i++) {
-        read(&phdr, sizeof(struct elf32_phdr), 1, base, ph_offset);
+        cilo_read(&phdr, sizeof(struct elf32_phdr), 1, fp);
 
         mem_sz += phdr.memsz;
-
-        /*increment program header offset */
-        ph_offset += sizeof(struct elf32_phdr);
     }
+
+    printf("Total in-memory image size: %d\n", mem_sz);
 
     /* read the PT_LOAD segments into memory at paddr + mem_sz
      */
-    ph_offset = hdr.phoff;
+    cilo_seek(fp, hdr.phoff, SEEK_SET);
     for (i = 0; i < hdr.phnum; i++) {
-        read(&phdr, sizeof(struct elf32_phdr), 1, base, ph_offset);
+        cilo_read(&phdr, sizeof(struct elf32_phdr), 1, fp);
 
         /* skip unloadable segments */
         if (phdr.type != ELF_PT_LOAD) continue;
 
         uint32_t leftover = phdr.memsz - phdr.filesz;
-        load_elf32_section(base, mem_sz + phdr.paddr,
+        printf("Loading section at %08x\n", phdr.paddr);
+        load_elf32_section(fp, mem_sz + phdr.paddr,
             phdr.offset, phdr.filesz);
 
         if (leftover > 0) {
             load_elf32_uninitialized_memory(mem_sz + phdr.paddr +
                 phdr.filesz, leftover);
         }
+
+        cilo_seek(fp, hdr.phoff + sizeof(struct elf32_phdr) * (i + 1), 
+            SEEK_SET);
     }
 
     /* assume the entry point is the smallest address we're loading */
@@ -167,24 +154,10 @@ int load_elf32_file(uint32_t base, uint32_t loader_addr)
 #endif
 
     /* Jump to the copy routine */
-/*    asm (".set noreorder\n"
-         "move $k0, %[bootcpy]\n"
-         "move $a0, %[kdataoffset]\n"
-         "move $a1, %[kdatalength]\n"
-         "move $a2, %[kentrypt]\n"
-         "move $a3, %[kloadoffset]\n"
-         "jr $k0\n"
-         " nop\n"
-         : 
-         : [bootcpy] "r"(loader_addr), [kdataoffset] "r"(load_offset),
-           [kdatalength] "r"(mem_sz), [kentrypt]"r"(hdr.entry),
-           [kloadoffset] "r"(hdr.entry)
-         : "k0", "a0", "a1", "a2", "a3"
-    ); */
-
-    ((void (*)(uint32_t data_offset, uint32_t data_length, uint32_t entry_pt, 
+    stage_two(load_offset, hdr.entry, mem_sz);
+/*    ((void (*)(uint32_t data_offset, uint32_t data_length, uint32_t entry_pt, 
         uint32_t load_offset)) (loader_addr))
-        (load_offset, mem_sz, hdr.entry, hdr.entry);
+        (load_offset, mem_sz, hdr.entry, hdr.entry); */
 
     return -1; /* something failed, badly */
 }

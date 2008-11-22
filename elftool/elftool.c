@@ -104,6 +104,9 @@ const char *machine_id_to_string(uint16_t machine)
     case 0x1e:
         return "Cisco 3620/40 Router (MIPS, IDT R4700, Big Endian)";
         break;
+    case 0x24:
+        return "Cisco 12000 Series Router (MIPS/PowerPC, Big Endian)";
+        break;
     case 0x2b:
         return "Cisco 2600 Series Router (PowerPC, MPC860, Big Endian)";
         break;

@@ -42,7 +42,7 @@ RAW=${OBJCOPY} --strip-unneeded --alt-machine-code ${MACHCODE}
 
 INCLUDE=-Iinclude/ -Imach/${TARGET} -Iinclude/mach/${TARGET}
 
-CFLAGS=$(INCLUDE) -fno-builtin -fomit-frame-pointer -fno-pic -mno-abicalls \
+CFLAGS=-fno-builtin -fomit-frame-pointer -fno-pic -mno-abicalls \
 	-Wall
 
 ASFLAGS=-xassembler-with-cpp -traditional-cpp
@@ -50,9 +50,10 @@ ASFLAGS=-xassembler-with-cpp -traditional-cpp
 LDFLAGS=--omagic -nostartfiles -nostdlib --discard-all --strip-all \
 	-Ttext ${TEXTADDR} --entry _start
 
-OBJECTS=main.o printf.o elf_loader.o
+OBJECTS=string.o main.o ciloio.o printf.o elf_loader.o
 
-LINKOBJ=${OBJECTS} $(MACHDIR)/promlib.o $(MACHDIR)/start.o #$(MACHDIR)/platform.o
+LINKOBJ=${OBJECTS} $(MACHDIR)/promlib.o $(MACHDIR)/start.o $(MACHDIR)/platio.o\
+	$(MACHDIR)/platform.o
 
 
 THISFLAGS='LDFLAGS=$(LDFLAGS)' 'ASFLAGS=$(ASFLAGS)' \
@@ -65,10 +66,10 @@ ${PROG}: sub ${OBJECTS}
 	${RAW} ${PROG}.elf ${PROG}.bin
 
 .c.o:
-	${CC} ${CFLAGS} -c $<
+	${CC} ${CFLAGS} $(INCLUDE) -c $<
 
 .S.o:
-	${CC} ${CFLAGS} ${ASFLAGS} -c $<
+	${CC} ${CFLAGS} $(INCLUDE) ${ASFLAGS} -c $<
 	
 sub:
 	@for i in $(MACHDIR); do \
