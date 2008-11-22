@@ -86,20 +86,13 @@ int load_elf32_file(struct file *fp)
         return -1;
     }
 
-
-    if (hdr.machine != ELF_MACH_MIPS || hdr.machine != ELF_MACH_MIPS_R4K_BE ||
-        hdr.machine != 0x1e)
-    {
-        printf("Warning: Unexpected machine type %#4x found.\n", hdr.machine);
-    }
-
     if (hdr.ehsize != 52 /* bytes */) {
         printf("Warning: ELF header greater than 52 bytes found. Found: %u\n",
             hdr.ehsize);
     }
 
-    if (hdr.shnum == 0) {
-        printf("Can't be zero section headers in a kernel image! Aborting.\n");
+    if (hdr.phnum == 0) {
+        printf("Found zero segments in ELF file. Aborting load.\n");
         return -1;
     }
 
@@ -115,8 +108,6 @@ int load_elf32_file(struct file *fp)
         mem_sz += phdr.memsz;
     }
 
-    printf("Total in-memory image size: %d\n", mem_sz);
-
     /* read the PT_LOAD segments into memory at paddr + mem_sz
      */
     cilo_seek(fp, hdr.phoff, SEEK_SET);
@@ -127,7 +118,6 @@ int load_elf32_file(struct file *fp)
         if (phdr.type != ELF_PT_LOAD) continue;
 
         uint32_t leftover = phdr.memsz - phdr.filesz;
-        printf("Loading section at %08x\n", phdr.paddr);
         load_elf32_section(fp, mem_sz + phdr.paddr,
             phdr.offset, phdr.filesz);
 
@@ -155,9 +145,6 @@ int load_elf32_file(struct file *fp)
 
     /* Jump to the copy routine */
     stage_two(load_offset, hdr.entry, mem_sz);
-/*    ((void (*)(uint32_t data_offset, uint32_t data_length, uint32_t entry_pt, 
-        uint32_t load_offset)) (loader_addr))
-        (load_offset, mem_sz, hdr.entry, hdr.entry); */
 
     return -1; /* something failed, badly */
 }
