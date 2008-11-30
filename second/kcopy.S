@@ -11,10 +11,19 @@
 #include <asm/regdef.h>
 #include <asm/asm.h>
 
+#define KSEG0       0x80000000
+#define CACHE_SIZE  0x4000
+
+#define ICACHE_INVALIDATE               0x00
+#define DCACHE_WRITEBACK_INVALIDATE     0x01
+
+#define CACHE_LINE_LEN          0x4
+
 EXPORT(_start)
 
 LEAF(_start)
     .set noreorder
+    .set mips3
 
 1:  lw s0, 0(a0)   # load byte from address pointed to in a0 
     sw s0, 0(a3)    # copy byte to address pointed to in a3
@@ -32,11 +41,22 @@ LEAF(_start)
     syscall
     nop
 
-    li sp, 0x80000000
+    li sp, KSEG0
     add sp, sp, v0
+    
+    /* invalidate the caches */
+    li k0, KSEG0
+    addi k1, k0, CACHE_SIZE
 
+2:  cache ICACHE_INVALIDATE, 0(k0)
+    cache DCACHE_WRITEBACK_INVALIDATE, 0(k0)
+
+    ble k0, k1, 2b
+     addi k0, CACHE_LINE_LEN
+
+    /* jump to the kernel, setting up the firmware args appropriately */
     move a0, v0
-    li a1, 0x80000000
+    li a1, KSEG0
     li a3, 0
     li v0, 0
 

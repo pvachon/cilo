@@ -110,7 +110,7 @@ enter_filename:
 #ifdef DEBUG
         printf("DEBUG: cmd_line: %s\n", cmd_line);
 #endif
-        printf("Booting %s.\n");
+        printf("Booting %s.\n", kernel);
         if (load_elf32_file(&kernel_file) 
             < 0) 
         {
