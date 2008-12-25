@@ -8,6 +8,7 @@
  * source distribution for more details.
  */
 
+#include <asm/mipsregs.h>
 #include <asm/regdef.h>
 #include <asm/asm.h>
 
@@ -53,6 +54,14 @@ LEAF(_start)
 
     ble k0, k1, 2b
      addi k0, CACHE_LINE_LEN
+
+    /* set SR(BEV) = 0 */
+    mfc0 k0, CP0_STATUS
+    nop
+    /* fix... me... please */
+    li k1, 0xFFBFFFFF
+    and k0, k1
+    mtc0 k0, CP0_STATUS
 
     /* jump to the kernel, setting up the firmware args appropriately */
     move a0, v0

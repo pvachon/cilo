@@ -26,7 +26,7 @@ INCLUDE=-I../include
 
 CFLAGS=$(INCLUDE) -fno-builtin -fomit-frame-pointer -fno-pic -mno-abicalls -Wall
 
-ASFLAGS=-xassembler-with-cpp -traditional-cpp
+ASFLAGS=-D__ASSEMBLY__ -xassembler-with-cpp -traditional-cpp
 
 LDFLAGS= -nostartfiles -nostdlib --discard-all --strip-all --omagic \
 	-Ttext ${TEXTADDR} --entry _start

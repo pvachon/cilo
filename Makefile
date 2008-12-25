@@ -1,4 +1,4 @@
-# Configuration for the Cisco 3620/3640 Routers
+#Configuration for the Cisco 3620/3640 Routers
 TARGET=c3600
 MACHCODE=0x1e
 TEXTADDR=0x80008000
@@ -45,7 +45,7 @@ INCLUDE=-Iinclude/ -Imach/${TARGET} -Iinclude/mach/${TARGET}
 CFLAGS=-fno-builtin -fomit-frame-pointer -fno-pic -mno-abicalls \
 	-Wall
 
-ASFLAGS=-xassembler-with-cpp -traditional-cpp
+ASFLAGS=-D__ASSEMBLY__-xassembler-with-cpp -traditional-cpp
 
 LDFLAGS=--omagic -nostartfiles -nostdlib --discard-all --strip-all \
 	-Ttext ${TEXTADDR} --entry _start

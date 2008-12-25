@@ -180,19 +180,6 @@
 
 #endif
 
-/*
- * Default page size for a given kernel configuration
- */
-#ifdef CONFIG_PAGE_SIZE_4KB
-#define PM_DEFAULT_MASK	PM_4K
-#elif defined(CONFIG_PAGE_SIZE_16KB)
-#define PM_DEFAULT_MASK	PM_16K
-#elif defined(CONFIG_PAGE_SIZE_64KB)
-#define PM_DEFAULT_MASK	PM_64K
-#else
-#error Bad page size configuration!
-#endif
-
 
 /*
  * Values used for computation of new tlb entries

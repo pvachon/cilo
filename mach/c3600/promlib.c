@@ -94,6 +94,9 @@ int c_gets(char *b, int n)
         if (b[i - 1] == '\n' || b[i-1] == '\r') {
             break;
         }
+        else if (b[i - 1] == 0x8) {
+            i--;
+        }
     } while (i < n);
 
     b[i - 1] = '\0';
