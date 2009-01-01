@@ -42,7 +42,7 @@ RAW=${OBJCOPY} --strip-unneeded --alt-machine-code ${MACHCODE}
 
 INCLUDE=-Iinclude/ -Imach/${TARGET} -Iinclude/mach/${TARGET}
 
-CFLAGS=-fno-builtin -fomit-frame-pointer -fno-pic -mno-abicalls \
+CFLAGS+=-fno-builtin -fomit-frame-pointer -fno-pic -mno-abicalls \
 	-Wall
 
 ASFLAGS=-D__ASSEMBLY__-xassembler-with-cpp -traditional-cpp

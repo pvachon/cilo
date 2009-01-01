@@ -1,6 +1,7 @@
 /* Re-copy kernel image from given offset in a0 (length a1), and then
  * jump to entry point contained in a2. Copies data to location pointed
  * to in a3
+ * void kload(memory_start, memory_length, entry_point, copy_start)
  * Very naive.
  * ------------------------------------------------------------------
  * (c) 2008 Philippe Vachon <philippe@cowpig.ca>
@@ -26,6 +27,17 @@ LEAF(_start)
     .set noreorder
     .set mips3
 
+    /* invalidate the caches */
+    li k0, KSEG0
+    addi k1, k0, CACHE_SIZE
+
+2:  cache ICACHE_INVALIDATE, 0(k0)
+    cache DCACHE_WRITEBACK_INVALIDATE, 0(k0)
+
+    ble k0, k1, 2b
+     addi k0, CACHE_LINE_LEN
+
+
 1:  lw s0, 0(a0)   # load byte from address pointed to in a0 
     sw s0, 0(a3)    # copy byte to address pointed to in a3
 
@@ -45,19 +57,9 @@ LEAF(_start)
     li sp, KSEG0
     add sp, sp, v0
     
-    /* invalidate the caches */
-    li k0, KSEG0
-    addi k1, k0, CACHE_SIZE
-
-2:  cache ICACHE_INVALIDATE, 0(k0)
-    cache DCACHE_WRITEBACK_INVALIDATE, 0(k0)
-
-    ble k0, k1, 2b
-     addi k0, CACHE_LINE_LEN
-
     /* set SR(BEV) = 0 */
     mfc0 k0, CP0_STATUS
-    nop
+    nop 
     /* fix... me... please */
     li k1, 0xFFBFFFFF
     and k0, k1
@@ -69,7 +71,6 @@ LEAF(_start)
     li a3, 0
     li v0, 0
 
-    
     jr a2           # jump to kernel entry point
      nop
 

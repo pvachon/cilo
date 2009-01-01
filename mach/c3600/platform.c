@@ -55,7 +55,8 @@ uint32_t locate_stage_two()
 /**
  * Kick into the stage two loader.
  */
-void stage_two(uint32_t kern_off, uint32_t kern_entry, uint32_t kern_size)
+void stage_two(uint32_t kern_off, uint32_t kern_entry, uint32_t kern_size, 
+    uint32_t kern_loadpt)
 {
     uint32_t s2addr = ((uint32_t)find_file("ciscoload.two", FLASH_BASE)) +
         sizeof(struct fs_ent);
@@ -63,6 +64,6 @@ void stage_two(uint32_t kern_off, uint32_t kern_entry, uint32_t kern_size)
 
     ((void (*)(uint32_t data_offset, uint32_t data_length, uint32_t entry_pt,
         uint32_t load_offset)) (s2addr))
-        (kern_off, kern_size, kern_entry, kern_entry);
+        (kern_off, kern_size, kern_entry, kern_loadpt);
     
 }
