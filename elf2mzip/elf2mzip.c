@@ -1,3 +1,11 @@
+/* elf2mzip - convert a single LOADable segment ELF file to an MZIP image.
+ *
+ * (c) 2008 Philippe Vachoon <philippe@cowpig.ca>
+ *
+ * Licensed under the GNU General Public License v2. See COPYING
+ * in the distribution source directory for more information.
+ *
+ */
 #include <stdio.h>
 #include <sys/stat.h>
 #include <unistd.h>
