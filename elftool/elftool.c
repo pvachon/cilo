@@ -9,6 +9,7 @@
  */
 #include <elf.h>
 #include <stdio.h>
+#include <malloc.h>
 
 /**
  * swap functions - convert a header structure's endianess to the native
@@ -59,75 +60,146 @@ void swap_elf32_program_header(struct elf32_phdr *phdr)
     phdr->align = SWAP_32(phdr->align);
 }
 
+static char *e_types[] = { 
+    [ELF_TYPE_NONE] = "No specified file type",
+    [ELF_TYPE_REL] = "Relocatable File",
+    [ELF_TYPE_EXEC] = "Executable File",
+    [ELF_TYPE_DYN] = "Dynamic Shared Object File",
+    [ELF_TYPE_CORE] = "Core File"    
+};
+
+const char *file_type_to_string(uint16_t e_type)
+{
+    if (e_type <= 4) {
+        return e_types[e_type];
+    } else {
+        return "Unknown or custom file type";
+    }
+}
+
+static char *e_machines[] = {
+    [ELF_MACH_NONE] = "Unknown/No Machine Type",
+    [ELF_MACH_M32] = "AT&T WE 32100",
+    [ELF_MACH_SPARC] = "Sun SPARC",
+    [ELF_MACH_386] = "Intel i386 (80386)",
+    [ELF_MACH_68K] = "Motorola 68000",
+    [ELF_MACH_88K] = "Motorola 88000",
+    [ELF_MACH_860] = "Intel i860 (80860)",
+    [ELF_MACH_MIPS] = "MIPS R3000 Big-Endian",
+    [0x9] = "IBM S/370",
+    [ELF_MACH_MIPS_R4K_BE] = "MIPS R4000 Big-Endian (Deprecated)",
+    [0xb] = "IBM RS/6000",
+    [0xc] = "Unknown",
+    [0xd] = "Unknown",
+    [0xe] = "Unknown",
+    [0xf] = "HP PA-RISC",
+    [0x10] = "Unknown",
+    [0x11] = "Fujitsu VPP500",
+    [0x12] = "Sun SPARC V.8+",
+    [0x13] = "Intel i960 (80960)",
+    [0x14] = "Cisco 4500 or IBM PowerPC",
+    [0x15] = "IBM PowerPC (64-bit)",
+    [0x16] = "IBM S/390",
+    [0x17] = "Unknown",
+    [0x18] = "Unknown",
+    [0x19] = "Cisco 7200 Series Router",
+    [0x1a] = "Unknown",
+    [0x1b] = "Unknown",
+    [0x1c] = "Unknown",
+    [0x1d] = "Unknown",
+    [0x1e] = "Cisco 3620/3640 Router (MIPS, IDT R4700)",
+    [0x1f] = "Unknown",
+    [0x20] = "Unknown",
+    [0x21] = "Unknown",
+    [0x22] = "Unknown",
+    [0x23] = "Unknown",
+    [0x24] = "Cisco 12000 Router or NEC V800",
+    [0x25] = "Fujitsu FR20",
+    [0x26] = "TRW RH-32",
+    [0x27] = "Motorola RCE",
+    [0x28] = "ARM",
+    [0x29] = "Digital Equipment Corporation Alpha",
+    [0x2a] = "Hitachi SuperH (SH)",
+    [0x2b] = "Cisco 2600 Series Router (PowerPC, MPC860) or SPARC V.9 64-bit",
+    [0x2c] = "Siemens Tricore Embedded Processor",
+    [0x2d] = "Argonaut RISC Core",
+    [0x2e] = "Hitachi H8/300",
+    [0x2f] = "Hitachi H8/300H",
+    [0x30] = "Hitachi H8S",
+    [0x31] = "Hitachi H8/500",
+    [0x32] = "Intel Itanium (Merced)",
+    [0x33] = "Cisco 1700 Series Router (PowerPC, MPC860) or Stanford MIPS-X",
+    [0x34] = "Cisco 3660 Series Router (MIPS, R5000) or Motorola Coldfire",
+    [0x35] = "Motorola M68HC12",
+    [0x36] = "Fujitsu MMA Multimedia Accelerator",
+    [0x37] = "Siemens PCP",
+    [0x38] = "Sony nCPU Embedded RISC",
+    [0x39] = "Denso NDR1 Microprocessor",
+    [0x3a] = "Motorola Star*Core Digital Signal Processor",
+    [0x3b] = "Toyota ME16 Microprocessor",
+    [0x3c] = "STMicroelectronics ST100 Microprocessor",
+    [0x3d] = "Advanced Logic Corp. TinyJ Embedded Family Microprocessor",
+    [0x3e] = "AMD x86-64/Intel EM64-T",
+    [0x3f] = "Sony DSP Processor",
+    [0x40] = "Unknown",
+    [0x41] = "Unknown",
+    [0x42] = "Siemens FX66 Microcontroller",
+    [0x43] = "STMicroelectronics ST9+ 8/16-bit Microcontroller",
+    [0x44] = "STMicroelectronics ST7 8-bit Microcontroller",
+    [0x45] = "Motorola MC68HC16 Microcontroller",
+    [0x46] = "Motorola MC68HC11 Microcontroller",
+    [0x47] = "Motorola MC68HC08 Microcontroller",
+    [0x48] = "Motorola MC68HC05 Microcontroller",
+    [0x49] = "Silicon Graphics SVx",
+    [0x4a] = "STMicroelectronics ST19 8-bit Microcontroller",
+    [0x4b] = "Digital Equipment Corporation VAX",
+    [0x4c] = "AXIS Communications 32-bit CRIS Processor",
+    [0x4d] = "Infineon Tech. 32-bit Embedded Javelin Processor",
+    [0x4e] = "Element 14 64-bit DSP",
+    [0x4f] = "LSI Logic 16-bit DSP",
+    [0x50] = "MMIX - Knuth's Educational 64-bit CPU",
+    [0x51] = "Harvard University Machine-Independent Object File",
+    [0x52] = "SiTera Prism",
+    [0x53] = "Atmel AVR 8-bit Microcontroller",
+    [0x54] = "Fujitsu FR30",
+    [0x55] = "Mitsubishi D10V",
+    [0x56] = "Mitsubishi D30V",
+    [0x57] = "NEC V850 CPU",
+    [0x58] = "Mitsubishi M32R",
+    [0x59] = "Matsushita MN10300",
+    [0x5a] = "Matsushita MN10200",
+    [0x5b] = "picoJava",
+    [0x5c] = "OpenRISC 32-bit Embedded Processor",
+    [0x5d] = "ARC Cores Tangent-A5",
+    [0x5e] = "Tensilica Xtensa Architecture",
+    [0x5f] = "Unknown",
+    [0x60] = "Unknown",
+    [0x61] = "Cisco 3725 Router (MIPS, RM7000)",
+    [0x62] = "Unknown",
+    [0x63] = "Unknown",
+    [0x64] = "Unknown",
+    [0x65] = "Unknown",
+    [0x66] = "Cisco 2691 Router (MIPS, R52xx)",
+    [0x67] = "Unknown",
+    [0x68] = "Unknown",
+    [0x69] = "Cisco 3745 Router (MIPS)"
+};
+
 /**
  * Convert a e_machine code to a human-readable string, if it's a machine
  * we are aware of. 0x0 through 0xa are specified as a part of the ELF
  * specification, anything else has been found through experimentation or
  * through other sources of such information.
+ *
  * @param machine the e_machine code read from the ELF file.
  * @return a string containing the machine type name.
  */
 const char *machine_id_to_string(uint16_t machine)
 {
-    switch (machine) {
-    case 0:
+    if (machine <= 0x69)
+        return e_machines[machine];
+    else
         return "Unknown";
-        break;
-    case 1:
-        return "AT&T WE 32100";
-        break;
-    case 2:
-        return "SPARC";
-        break;
-    case 3:
-        return "Intel 80386";
-        break;
-    case 4:
-        return "Motorola 68000";
-        break;
-    case 5:
-        return "Motorola 88000";
-        break;
-    case 7:
-        return "Intel 80860";
-        break;
-    case 8:
-        return "MIPS R3000";
-        break;
-    case 10:
-        return "MIPS R4000";
-        break;
-    case 0x19:
-        /* note: can also be c6000 it would seem? */
-        return "Cisco 7200 Series Router (Big Endian)";
-        break;
-    case 0x1e:
-        return "Cisco 3620/40 Router (MIPS, IDT R4700, Big Endian)";
-        break;
-    case 0x24:
-        return "Cisco 12000 Series Router (MIPS/PowerPC, Big Endian)";
-        break;
-    case 0x2b:
-        return "Cisco 2600 Series Router (PowerPC, MPC860, Big Endian)";
-        break;
-    case 0x33:
-        return "Cisco 1700 Series Router (PowerPC, MPC860, Big Endian)";
-        break;
-    case 0x34:
-        return "Cisco 3660 Router (MIPS, R5000, Big Endian)";
-        break;
-    case 0x61:
-        return "Cisco 3725 Router (MIPS, Big Endian)";
-        break;
-    case 0x66:
-        return "Cisco 2691 Router (MIPS, Big Endian)";
-        break;
-    case 0x69:
-        return "Cisco 3745 Router (MIPS, Big Endian)";
-        break;
-    default:
-        return "Reserved";
-    }
 }
 
 /**
@@ -258,11 +330,19 @@ int main(const int argc, const char *argv[])
 
     fread(magic, 1, 4, fp);
 
-    if (magic[0] != ELF_MAGIC_1 || magic[1] != ELF_MAGIC_2 ||
+    if (magic[0] == 'M' && magic[1] == 'Z' && magic[2] == 'I' &&
+        magic[3] == 'P')
+    {
+        printf("Found MZIP file. This tool is unable to analyze MZIP files.\n");
+        fclose(fp);
+        return -1;
+    }
+    else if (magic[0] != ELF_MAGIC_1 || magic[1] != ELF_MAGIC_2 ||
         magic[2] != ELF_MAGIC_3 || magic[3] != ELF_MAGIC_4)
     {
         printf("ELF magic number not found. Aborting.\n");
         printf("Magic found: 0x%08x.\n", magic);
+        fclose(fp);
         return -1;
     }
 
@@ -287,6 +367,8 @@ int main(const int argc, const char *argv[])
         "Big endian" : "Little endian");
     printf("\tVersion: %u\n\n", hdr.ident[ELF_INDEX_VERSION]);
 
+    printf("ELF Object Type: %s (%u)\n", file_type_to_string(hdr.type), hdr.type);
+
     printf("Machine ID: %#4x\n\t%s\n", hdr.machine, machine_id_to_string(hdr.machine));
     printf("Version: 0x%08x\n", hdr.version);
     printf("Entry point: 0x%08x\n", hdr.entry);
@@ -299,6 +381,34 @@ int main(const int argc, const char *argv[])
     printf("Section header Entry Size: %u bytes\n", hdr.shentsize);
     printf("Section Header Count: %u\n", hdr.shnum);
     printf("String table entry index: %u\n\n", hdr.shstrndx);
+
+    char *strtabl = NULL;
+    if (hdr.shstrndx >= hdr.shnum) {
+        printf("Warning: String table specified in header is greater than "
+            "total number of \nsections.\n\n");
+    }
+    else
+    {
+        /* retrieve string table */
+        struct elf32_section_header strtab;
+        fseek(fp, hdr.shoff + (sizeof(struct elf32_section_header) * 
+            hdr.shstrndx), SEEK_SET);
+
+        fread(&strtab, sizeof(struct elf32_section_header), 1, fp);
+
+        if (swap)
+            swap_elf32_section_header(&strtab);
+    
+        /* check the sanity of the STRTAB section header */
+        if (strtab.type != ELF_SHT_STRTAB && strtab.type!= ELF_SHT_NULL) {
+            printf("Warning: String table specified in header is not a "
+                "SHT_STRTAB!\n\n");
+        } else if (strtab.type != ELF_SHT_NULL) {
+            fseek(fp, strtab.offset, SEEK_SET);
+            strtabl = (char *)malloc(strtab.size);
+            fread(strtabl, strtab.size, 1, fp);
+        }
+    }
 
 
 
@@ -326,9 +436,12 @@ int main(const int argc, const char *argv[])
         if (swap) {
             swap_elf32_section_header(&shdr);
         }
-        
+
         printf("Section %d\n", i);
-        printf("\tName: %u\n", shdr.name);
+        printf("\tName: %s [%u]\n", 
+            strtabl == NULL ? "unknown" : 
+            strtabl[shdr.name] == '\0' ? "null" : &strtabl[shdr.name],
+            shdr.name);
         printf("\tType: %s (0x%08x)\n", sh_type_to_string(shdr.type),
             shdr.type);
         printf("\tFlags: 0x%08x\n", shdr.flags);
@@ -372,6 +485,8 @@ int main(const int argc, const char *argv[])
     }
 
     fclose(fp);
+
+    if (strtabl) free(strtabl);
 
     return 0;
 }
