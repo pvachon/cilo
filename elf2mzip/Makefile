@@ -1,18 +1,18 @@
 CC = gcc
-CFLAGS = -Wall -O2
+CFLAGS = -g -Wall # -O2
 INCLUDES = -I.
 
-OBJECTS = elf2mzip.o mzip.o
+OBJECTS = elf2img.o mzip.o
 
 COMPILE = $(CC) $(CFLAGS) $(INCLUDES)
 
 LDFLAGS = -lzip
 
-IMAGENAME = elf2mzip
+IMAGENAME = elf2img
 
-all: elf2mzip
+all: elf2img
 
-elf2mzip: $(OBJECTS)
+elf2img: $(OBJECTS)
 	$(COMPILE) $(OBJECTS) $(LDFLAGS) -o $(IMAGENAME)
 
 .c.o:

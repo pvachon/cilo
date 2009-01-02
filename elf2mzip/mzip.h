@@ -28,6 +28,8 @@ struct mzip_header {
 
 struct mzip_header *mzip_initialize(struct mzip_header *hdr);
 
+void mzip_swap(struct mzip_header *hdr);
+
 int mzip_codeseg_build(void *buffer, uint32_t buf_size, void **out_buf, 
     uint32_t *seg_size);
 

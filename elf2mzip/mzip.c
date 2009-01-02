@@ -256,6 +256,25 @@ int mzip_write(FILE *fp, struct mzip_header *hdr, void *buffer,
 }
 
 /**
+ * Swap bytes.
+ * @param hdr a struct mzip_header
+ */
+void mzip_swap(struct mzip_header *hdr)
+{
+    hdr->hdr_version = SWAP_32(hdr->hdr_version);
+    hdr->hdr_entrypt = SWAP_32(hdr->hdr_entrypt);
+    hdr->hdr_flags1 = SWAP_32(hdr->hdr_flags1);
+    hdr->hdr_flags2 = SWAP_32(hdr->hdr_flags2);
+    hdr->hdr_crc_code = SWAP_16(hdr->hdr_crc_code);
+    hdr->hdr_crc_header = SWAP_16(hdr->hdr_crc_header);
+    hdr->hdr_header_size = SWAP_32(hdr->hdr_header_size);
+    hdr->hdr_flags3 = SWAP_32(hdr->hdr_flags3);
+    hdr->hdr_code_packed_size = SWAP_32(hdr->hdr_code_packed_size);
+    hdr->hdr_code_unpacked_size = SWAP_32(hdr->hdr_code_unpacked_size);
+    hdr->hdr_memory_image_size = SWAP_32(hdr->hdr_memory_image_size);
+}
+
+/**
  * Print out contents of a struct mzip_hdr
  * @param hdr Pointer to struct mzip_hdr instance
  */
