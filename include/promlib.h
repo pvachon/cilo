@@ -12,6 +12,8 @@
 
 #define TIMER   0
 
+#define GETBAUD 62
+
 /* Promlib Calls */
 void c_putc(const char c);
 void c_puts(const char *s);
@@ -21,5 +23,6 @@ int c_memsz(void);
 long c_timer(void);
 int c_strnlen(const char *c, int maxlen);
 char *c_verstr(void);
+int c_baud(void);
 
 #endif /* _PROMLIB_H */

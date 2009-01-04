@@ -87,6 +87,9 @@ void start_bootloader()
 enter_filename:
     printf("\nEnter filename to boot:\n> ");
     c_gets(buf, 128);
+
+    int baud = c_baud(); /* get console baud rate */
+    printf("Boot console baud rate: %d\n", baud);
     
     /* determine if a command line string has been appended to kernel name */
     if ((cmd_line_append = strchr(buf, ' ')) != NULL) {
@@ -95,9 +98,16 @@ enter_filename:
         uint32_t kernel_name_len = cmd_line_append - buf;
         strncpy(kernel, buf, kernel_name_len);
         kernel[kernel_name_len + 1] = '\0';
+        /* determine if console is set in the command line; if not,
+         * append it.
+         */
+        if (!strstr(cmd_line,"console")) {
+            sprintf(cmd_line, "%s console=ttyS0,%d", cmd_line, baud);
+        }
+
     } else {
-        cmd_line[0] = '\0';
         strncpy(kernel, buf, 48);
+        sprintf(cmd_line, "console=ttyS0,%d", baud);
     }
 
     printf("\n\nAttempting to load file %s\n", kernel);

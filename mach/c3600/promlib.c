@@ -183,3 +183,22 @@ int c_strnlen(const char *s, int maxlen)
 
     return i;
 }
+
+/* baud - get console baud rate
+ * @return boot console baud rate
+ */
+int c_baud(void)
+{
+    int b = 0;
+
+    asm volatile (".set noreorder\n"
+                  "li $a0, %[syscall]\n"
+                  "syscall\n"
+                  "nop\n"
+                  "move %[result], $a0\n"
+                  ".set reorder\n"
+        : [result]"=r"(b)
+        : [syscall]"g"(GETBAUD)
+        : "a0", "v0"
+    );
+}

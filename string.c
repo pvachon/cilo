@@ -56,7 +56,7 @@ char *strncpy(char *dest, const char *src, uint32_t n)
     return dest;
 }
 
-uint32_t strlen(char *s)
+uint32_t strlen(const char *s)
 {
     int i = 0;
 
@@ -104,3 +104,20 @@ const char *strchr(const char *s, int c)
     return NULL;
 }
 
+const char *strstr(const char *haystack, const char *needle)
+{
+    int npos = 0; /* position within needle */
+    int nlen = strlen(needle);
+    char *start;
+
+    while (*haystack != '\0') {
+        if (npos == 0) start = haystack; 
+
+        if (needle[npos] == *(haystack++)) npos++;
+        else npos = 0;
+
+        if (npos == nlen - 1) return start; 
+    }
+
+    return NULL;
+}

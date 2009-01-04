@@ -1,3 +1,13 @@
+/* elf2img - convert an ELF loadable object to a raw binary image or a Cisco-
+ *           specific loadabe image.
+ *
+ * (c) 2008 Philippe Vachoon <philippe@cowpig.ca>
+ *
+ * Licensed under the GNU General Public License v2. See COPYING
+ * in the distribution source directory for more information.
+ *
+ */
+
 #include <elf.h>
 #include <types.h>
 
