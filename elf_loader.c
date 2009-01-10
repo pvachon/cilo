@@ -63,10 +63,9 @@ void load_elf32_uninitialized_memory(uint32_t address, uint32_t length)
  * @param loader_addr address of the loader binary in memory
  * @return  
  */
-int load_elf32_file(struct file *fp)
+int load_elf32_file(struct file *fp, char *cmd_line)
 {
     struct elf32_header hdr;
-
     uint32_t mem_sz = 0;
 
     /* read in header entries */
@@ -110,21 +109,6 @@ int load_elf32_file(struct file *fp)
     uint32_t offset = 0xffffffff;
 
     cilo_seek(fp, hdr.phoff, SEEK_SET);
-    /* read in program header(s), determine total memory size of image */
-    /* TODO: figure out if there's a better way to determine this */
-    for (i = 0; i < hdr.phnum; i++) {
-        cilo_read(&phdr, sizeof(struct elf32_phdr), 1, fp);
-
-        if (phdr.type != ELF_PT_LOAD) continue;
-
-        mem_sz += phdr.memsz;
-
-        if (phdr.paddr < offset) offset = phdr.paddr;
-    }
-
-#ifdef DEBUG
-    printf("mem_sz = %08x\n", mem_sz);
-#endif
 
     /* read the PT_LOAD segments into memory at paddr + mem_sz */
     cilo_seek(fp, hdr.phoff, SEEK_SET);
@@ -134,35 +118,32 @@ int load_elf32_file(struct file *fp)
         /* skip unloadable segments */
         if (phdr.type != ELF_PT_LOAD) continue;
 
-        /* uint32_t leftover = phdr.memsz - phdr.filesz; */
-        load_elf32_section(fp, mem_sz + phdr.paddr,
+        load_elf32_section(fp, phdr.paddr,
             phdr.offset, phdr.filesz);
 
-/*        if (leftover > 0) {
-            load_elf32_uninitialized_memory(mem_sz + phdr.paddr +
-                phdr.filesz, leftover);
-        } */
+        mem_sz += phdr.memsz;
+
+        if (phdr.memsz - phdr.filesz > 0) {
+            load_elf32_uninitialized_memory(phdr.paddr +
+                phdr.filesz, phdr.memsz - phdr.filesz);
+        }
 
         cilo_seek(fp, hdr.phoff + sizeof(struct elf32_phdr) * (i + 1), 
             SEEK_SET);
     }
 
     /* assume the entry point is the smallest address we're loading */
-    uint32_t load_offset = mem_sz + offset;
-
-    printf("Loaded %d bytes at %08x.\n", mem_sz, load_offset);
+    printf("Loaded %d bytes.\n", mem_sz);
 
     printf("Kicking into Linux.\n");
 
 #ifdef DEBUG
-    printf("load_offset = 0x%08x\n", load_offset);
     printf("hdr.entry = 0x%08x\n", hdr.entry);
     printf("mem_sz = 0x%08x\n", mem_sz);
-    printf("offset = 0x%08x\n", offset);
 #endif
 
-    /* Jump to the copy routine */
-    stage_two(load_offset, hdr.entry, mem_sz, offset);
+    ((void (*)(uint32_t mem_sz, char *cmd_line))(hdr.entry))
+        (c_memsz(), cmd_line);
 
     return -1; /* something failed, badly */
 }

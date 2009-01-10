@@ -71,13 +71,6 @@ void start_bootloader()
     c_putc('O');
     platform_init();
 
-    /* locate the stage two loader */
-    if (!locate_stage_two()) {
-        printf("\nError: Unable to find valid stage two loader. "
-            "Aborting load.\n");
-        return;
-    }
-
     printf("\nCiscoLoader (CILO) - Linux bootloader for Cisco Routers\n");
     printf("Available RAM: %d kB\n", r);
 
@@ -121,7 +114,7 @@ enter_filename:
         printf("DEBUG: cmd_line: %s\n", cmd_line);
 #endif
         printf("Booting %s.\n", kernel);
-        if (load_elf32_file(&kernel_file) 
+        if (load_elf32_file(&kernel_file, cmd_line) 
             < 0) 
         {
             printf("Fatal error while loading kernel. Aborting.\n");

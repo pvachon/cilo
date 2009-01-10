@@ -5,6 +5,8 @@ TEXTADDR=0x80008000
 ifndef CROSS_COMPILE
 CROSS_COMPILE=mips-elf-
 endif
+CFLAGS=-DDEBUG -mno-abicalls
+LDFLAGS=-Ttext ${TEXTADDR}
 
 # Configuration for the Cisco 3660 Routers
 # TARGET=c3600
@@ -15,15 +17,16 @@ endif
 # endif
 
 # Configuration for the Cisco 1700 Series Routers
-# TARGET=c1700
-# MACHINE=0x33
-# TEXTADDR=0x80008000
-# ifndef CROSS_COMPILE
-# CROSS_COMPILE=powerpc-elf-
-# endif
+#TARGET=c1700
+#MACHCODE=0x33
+#TEXTADDR=0x80008000
+#ifndef CROSS_COMPILE
+#CROSS_COMPILE=powerpc-elf-
+#endif
+#LDFLAGS=-Ttext=${TEXTADDR}
 
 # additional CFLAGS
-CFLAGS=
+CFLAGS+=
 
 # don't modify anything below here
 # ===================================================================
@@ -42,13 +45,13 @@ RAW=${OBJCOPY} --strip-unneeded --alt-machine-code ${MACHCODE}
 
 INCLUDE=-Iinclude/ -Imach/${TARGET} -Iinclude/mach/${TARGET}
 
-CFLAGS+=-fno-builtin -fomit-frame-pointer -fno-pic -mno-abicalls \
+CFLAGS+=-fno-builtin -fomit-frame-pointer -fno-pic \
 	-Wall
 
 ASFLAGS=-D__ASSEMBLY__-xassembler-with-cpp -traditional-cpp
 
-LDFLAGS=--omagic -nostartfiles -nostdlib --discard-all --strip-all \
-	-Ttext ${TEXTADDR} --entry _start
+LDFLAGS+=--omagic -nostartfiles -nostdlib --discard-all --strip-all \
+	--entry _start
 
 OBJECTS=string.o main.o ciloio.o printf.o elf_loader.o
 
@@ -75,13 +78,11 @@ sub:
 	@for i in $(MACHDIR); do \
 	echo "Making all in $$i..."; \
 	(cd $$i; $(MAKE) $(MFLAGS) $(THISFLAGS) all); done
-	(cd second/; $(MAKE) $(MFLAGS))
 
 subclean:
 	@for i in $(MACHDIR); do \
 	echo "Cleaning all in $$i..."; \
 	(cd $$i; $(MAKE) $(MFLAGS) clean); done
-	(cd second/; $(MAKE) $(MFLAGS) clean)
 
 clean: subclean
 	-rm -f *.o

@@ -22,22 +22,17 @@ target architecture is mips-elf and not mips-unknown-linux-gnu), just go
 to the root directory of the source distribution and type make. Everything
 should build from there.
 
-Next, build the second stage bootloader by going to the second/ directory 
-and typing make.
-
-Copy the ciscoload.bin and ciscoload.two files to the router's flash along
-with your kernel and set the router boot image to be ciscoload.bin.
+Copy the ciscoload.bin file to the router's flash along with your kernel and 
+set the router boot image to be ciscoload.bin.
 
 4. How do I use CILO?
 Assuming you have one of the supported routers, it is really quite easy. 
-In short, you must build CiscoLoad, build the stage-two loader and copy 
-them to your device's flash, typically using IOS.
+In short, you must build CiscoLoad and a kernel then copy  them to your 
+device's flash, typically using IOS.
 
 When the router boots, it will load CILO; CILO then will prompt you to 
 select the file you want to boot. Enter the file name you wish to boot, and 
 away you go!
-
-Of course, it makes sense to put your kernel on your flash device as well.
 
 5. What hardware is supported?
 At this time, the Cisco 3600 Series of routers (3620 and 3640 at least) are

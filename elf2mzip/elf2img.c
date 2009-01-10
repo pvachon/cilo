@@ -19,10 +19,11 @@
 
 void usage(const char *s)
 {
-    printf("usage: %s [-m] [elffile] [outfile]\n", s);
+    printf("usage: %s [-m] [elffile] [outfile] [descrfile]\n", s);
     printf("\t-m Generates an MZIP image\n");
     printf("\t[elffile] Input ELF file\n");
     printf("\t[outfile] Output image\n");
+    printf("\t[descrfile] file containing textual description of image\n");
     printf("The parameters of the format to be converted to are determined "
         "based\non the structure of the input ELF file.\n\n");
 }
@@ -64,14 +65,15 @@ int main(const int argc, const char *argv[])
     struct elf32_phdr *phdr;
     int i;
     char swap = 0;
-    const char *file_in = argv[argc - 2];
-    const char *file_out = argv[argc - 1];
+    const char *file_in = argv[argc - 3];
+    const char *file_out = argv[argc - 2];
+    const char *file_desc = argv[argc - 1];
     char mzip = 0;
 
     printf("elf2img - Cisco Router Image Generation Utility.\n");
     printf("(c) 2009 Philippe Vachon <philippe@cowpig.ca>\n\n");
 
-    if (argc < 2) {
+    if (argc < 3) {
         printf("Insufficient arguments.\n");
         USAGE;
         return -1;
@@ -240,14 +242,44 @@ int main(const int argc, const char *argv[])
     mz.hdr_crc_header = swap ? SWAP_16(crc) : crc;
 
     mzip_print_header(&mz);
+     
+    /* read in the description file */
+    FILE *fp_desc = fopen(file_desc, "r");
+    if (!fp_desc) {
+        printf("Unable to open description file.\n");
+        USAGE;
+        goto quit;
+    }
+
+    fseek(fp_desc, 0, SEEK_END);
+    uint32_t desc_len = ftell(fp_desc);
+
+    char *desc_buf = (char *)malloc(desc_len);
+    if (desc_buf == NULL) {
+        printf("Error while allocating memory for description buffer.\n");
+        goto quit;
+    }
+
+    rewind(fp_desc);
+    fread(desc_buf, desc_len, 1, fp_desc);
+
+    fclose(fp_desc);
+
+    printf("Descriptor:\n%s", desc_buf);
 
     /* write out the MZIP file */
     mzip_write_header(fp_out, &mz);
     mzip_write_codeseg(fp_out, zip_buf, seg_size);
 
+    fseek(fp_out, 0, SEEK_END);
+
+    fwrite(desc_buf, desc_len, 1, fp_out);
+
+quit:
     if (zip_buf) free(zip_buf);
 
     free(phdr);
+    free(desc_buf);
     fclose(fp_in);
     fclose(fp_out);
     return 0;

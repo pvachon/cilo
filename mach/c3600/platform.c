@@ -42,28 +42,3 @@ void flash_directory()
         f = (struct fs_ent *)(FLASH_BASE + offset);
     }
 }
-
-/**
- * Locate the stage two loader for CiscoLoad for this particular platform
- * returns 0 if not found, 1 if found
- */
-uint32_t locate_stage_two()
-{
-    return platio_find_file("ciscoload.two");
-}
-
-/**
- * Kick into the stage two loader.
- */
-void stage_two(uint32_t kern_off, uint32_t kern_entry, uint32_t kern_size, 
-    uint32_t kern_loadpt)
-{
-    uint32_t s2addr = ((uint32_t)find_file("ciscoload.two", FLASH_BASE)) +
-        sizeof(struct fs_ent);
-
-
-    ((void (*)(uint32_t data_offset, uint32_t data_length, uint32_t entry_pt,
-        uint32_t load_offset)) (s2addr))
-        (kern_off, kern_size, kern_entry, kern_loadpt);
-    
-}
