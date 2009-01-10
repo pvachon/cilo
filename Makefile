@@ -1,4 +1,4 @@
-#Configuration for the Cisco 3620/3640 Routers
+# Configuration for the Cisco 3620/3640 Routers
 TARGET=c3600
 MACHCODE=0x1e
 TEXTADDR=0x80008000
@@ -15,15 +15,17 @@ LDFLAGS=-Ttext ${TEXTADDR}
 # ifndef CROSS_COMPILE
 # CROSS_COMPILE=mips-elf-
 # endif
+# CFLAGS=-DDEBUG -mno-abicalls
+# LDFLAGS=-Ttext ${TEXTADDR}
 
 # Configuration for the Cisco 1700 Series Routers
-#TARGET=c1700
-#MACHCODE=0x33
-#TEXTADDR=0x80008000
-#ifndef CROSS_COMPILE
-#CROSS_COMPILE=powerpc-elf-
-#endif
-#LDFLAGS=-Ttext=${TEXTADDR}
+# TARGET=c1700
+# MACHCODE=0x33
+# TEXTADDR=0x80008000
+# ifndef CROSS_COMPILE
+# CROSS_COMPILE=powerpc-elf-
+# endif
+# LDFLAGS=-Ttext=${TEXTADDR}
 
 # additional CFLAGS
 CFLAGS+=
