@@ -72,7 +72,7 @@ void start_bootloader()
     platform_init();
 
     printf("\nCiscoLoader (CILO) - Linux bootloader for Cisco Routers\n");
-    printf("Available RAM: %d kB\n", r);
+    printf("Available RAM: %d kB\n", r/1024);
 
     printf("Available files:\n");
     flash_directory();
