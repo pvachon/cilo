@@ -108,7 +108,7 @@ const char *strstr(const char *haystack, const char *needle)
 {
     int npos = 0; /* position within needle */
     int nlen = strlen(needle);
-    char *start;
+    const char *start;
 
     while (*haystack != '\0') {
         if (npos == 0) start = haystack; 
