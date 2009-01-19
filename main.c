@@ -108,7 +108,7 @@ enter_filename:
 
     struct file kernel_file = cilo_open(kernel);
 
-    if (kernel_file.code == 0) {
+    if (kernel_file.code == -1) {
         printf("Unable to find \"%s\" on the specified filesystem.\n",
             kernel);
         goto enter_filename;
@@ -119,16 +119,13 @@ enter_filename:
         printf("Loading LZMA-compressed kernel image.\n");
         load_lzma(&kernel_file, LOADADDR, cmd_line);
     } else {
-
+        printf("Booting %s.\n", kernel);
         struct elf32_header hdr;
 
         cilo_read(&hdr, sizeof(struct elf32_header), 1, &kernel_file);
-
         cilo_seek(&kernel_file, 0, SEEK_SET);
 
         /* check if this is a 32-bit or 64-bit kernel image. */
-
-        printf("Booting %s.\n", kernel);
         if (load_elf32_file(&kernel_file, cmd_line) 
             < 0) 
         {

@@ -38,7 +38,7 @@ int32_t cilo_seek(struct file *fp, uint32_t offset, uint8_t whence)
         else fp->file_pos += offset;
         break;
     case SEEK_END:
-        /* unimplemented */
+        fp->file_pos = fp->file_len;
         break;
     default:
         return 0;

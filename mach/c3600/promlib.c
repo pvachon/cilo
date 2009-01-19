@@ -62,7 +62,7 @@ void c_putsn(const char *s, int n)
  */
 char c_getc(void)
 {
-    char c;
+    volatile char c;
 
     asm ( ".set noreorder\n "
            "li $a0, %[syscall]\n"
@@ -94,7 +94,7 @@ int c_gets(char *b, int n)
         if (b[i - 1] == '\n' || b[i-1] == '\r') {
             break;
         }
-        else if (b[i - 1] == 0x8) {
+        else if (b[i - 1] == 0x8 || b[i - 1] == 0x7f) {
             i--;
         }
     } while (i < n);
