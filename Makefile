@@ -6,7 +6,7 @@ LOADADDR=0x80028000
 ifndef CROSS_COMPILE
 CROSS_COMPILE=mips-elf-
 endif
-CFLAGS=-DDEBUG -mno-abicalls
+CFLAGS=-mno-abicalls
 LDFLAGS=-Ttext ${TEXTADDR}
 
 # Configuration for the Cisco 3660 Routers
@@ -17,7 +17,7 @@ LDFLAGS=-Ttext ${TEXTADDR}
 # ifndef CROSS_COMPILE
 # CROSS_COMPILE=mips-elf-
 # endif
-# CFLAGS=-DDEBUG -mno-abicalls
+# CFLAGS=-mno-abicalls
 # LDFLAGS=-Ttext ${TEXTADDR}
 
 # Configuration for the Cisco 1700 Series Routers
