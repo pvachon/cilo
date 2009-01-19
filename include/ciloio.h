@@ -18,6 +18,8 @@ struct file {
 #define SEEK_CUR 1
 #define SEEK_END 2
 
+#define cilo_tell(fp) ((fp)->file_pos)
+
 struct file cilo_open(const char *filename);
 int32_t cilo_read(void *pbuf, uint32_t size, uint32_t nmemb, 
     struct file *fp);

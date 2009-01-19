@@ -2,6 +2,7 @@
 TARGET=c3600
 MACHCODE=0x1e
 TEXTADDR=0x80008000
+LOADADDR=0x80028000
 ifndef CROSS_COMPILE
 CROSS_COMPILE=mips-elf-
 endif
@@ -12,6 +13,7 @@ LDFLAGS=-Ttext ${TEXTADDR}
 # TARGET=c3600
 # MACHCODE=0x34
 # TEXTADDR=0x80008000
+# LOADADDR=0x80028000
 # ifndef CROSS_COMPILE
 # CROSS_COMPILE=mips-elf-
 # endif
@@ -22,6 +24,7 @@ LDFLAGS=-Ttext ${TEXTADDR}
 # TARGET=c1700
 # MACHCODE=0x33
 # TEXTADDR=0x80008000
+# LOADADDR=0x80028000
 # ifndef CROSS_COMPILE
 # CROSS_COMPILE=powerpc-elf-
 # endif
@@ -48,14 +51,15 @@ RAW=${OBJCOPY} --strip-unneeded --alt-machine-code ${MACHCODE}
 INCLUDE=-Iinclude/ -Imach/${TARGET} -Iinclude/mach/${TARGET}
 
 CFLAGS+=-fno-builtin -fomit-frame-pointer -fno-pic \
-	-Wall
+	-Wall -DLOADADDR=${LOADADDR}
 
 ASFLAGS=-D__ASSEMBLY__-xassembler-with-cpp -traditional-cpp
 
 LDFLAGS+=--omagic -nostartfiles -nostdlib --discard-all --strip-all \
 	--entry _start
 
-OBJECTS=string.o main.o ciloio.o printf.o elf_loader.o
+OBJECTS=string.o main.o ciloio.o printf.o elf_loader.o lzma_loader.o \
+	LzmaDecode.o
 
 LINKOBJ=${OBJECTS} $(MACHDIR)/promlib.o $(MACHDIR)/start.o $(MACHDIR)/platio.o\
 	$(MACHDIR)/platform.o

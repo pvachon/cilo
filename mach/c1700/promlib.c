@@ -32,6 +32,9 @@ void c_puts(const char *s)
 {
     while(*s != '\0') {
         c_putc(*(s++));
+        if (*s == '\n') {
+            c_putc('\r');
+        }
     }
 }
 

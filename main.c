@@ -6,6 +6,7 @@
 #include <addr.h>
 #include <elf.h>
 #include <elf_loader.h>
+#include <lzma_loader.h>
 #include <ciloio.h>
 #include <promlib.h>
 
@@ -108,11 +109,25 @@ enter_filename:
     struct file kernel_file = cilo_open(kernel);
 
     if (kernel_file.code == 0) {
-        printf("Unable to find \"%s\" on the flash filesystem.\n", kernel);
+        printf("Unable to find \"%s\" on the specified filesystem.\n",
+            kernel);
+        goto enter_filename;
+    }
+
+    /* check if this is an LZMA-compressed kernel image. */
+    if (strstr(kernel, "lzma")) {
+        printf("Loading LZMA-compressed kernel image.\n");
+        load_lzma(&kernel_file, LOADADDR, cmd_line);
     } else {
-#ifdef DEBUG
-        printf("DEBUG: cmd_line: %s\n", cmd_line);
-#endif
+
+        struct elf32_header hdr;
+
+        cilo_read(&hdr, sizeof(struct elf32_header), 1, &kernel_file);
+
+        cilo_seek(&kernel_file, 0, SEEK_SET);
+
+        /* check if this is a 32-bit or 64-bit kernel image. */
+
         printf("Booting %s.\n", kernel);
         if (load_elf32_file(&kernel_file, cmd_line) 
             < 0) 
@@ -120,7 +135,6 @@ enter_filename:
             printf("Fatal error while loading kernel. Aborting.\n");
         }
     }
-    goto enter_filename;
 
-    /* return to ROMMON */
+    goto enter_filename;
 }
