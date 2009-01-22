@@ -95,7 +95,7 @@ int c_gets(char *b, int n)
             break;
         }
         else if (b[i - 1] == 0x8 || b[i - 1] == 0x7f) {
-            i--;
+            i-=2;
         }
     } while (i < n);
 

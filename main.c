@@ -16,30 +16,6 @@
 #include <string.h>
 
 /**
- * Dump 0x10 bytes of memory in canonical hexadecimal form
- * @param addr Starting address to dump from
- */
-void hex_dump(uint32_t addr)
-{
-    uint8_t *rgn = (uint8_t *)addr;
-    int i;
-
-    /* print out the address of the 16 bytes of interest */
-    printf("%8x " , addr);
-
-    /* print out hex value for individual bytes */
-    for (i = 0; i < 16; i++) {
-        printf("%02x ", rgn[i]);
-    }
-    /* print out as chars */
-    for (i = 0; i < 16; i++) {
-        printf("%c", rgn[i] >= 32 && rgn[i] <= 126 ? rgn[i] : '.');
-    }
-    printf("\n");
-
-}
-
-/**
  * Entry Point for CiscoLoad
  */
 void start_bootloader()
@@ -83,7 +59,6 @@ enter_filename:
     c_gets(buf, 128);
 
     int baud = c_baud(); /* get console baud rate */
-    printf("Boot console baud rate: %d\n", baud);
     
     /* determine if a command line string has been appended to kernel name */
     if ((cmd_line_append = strchr(buf, ' ')) != NULL) {
@@ -103,8 +78,6 @@ enter_filename:
         strncpy(kernel, buf, 48);
         sprintf(cmd_line, "console=ttyS0,%d", baud);
     }
-
-    printf("\n\nAttempting to load file %s\n", kernel);
 
     struct file kernel_file = cilo_open(kernel);
 
@@ -126,12 +99,14 @@ enter_filename:
         cilo_seek(&kernel_file, 0, SEEK_SET);
 
         /* check if this is a 32-bit or 64-bit kernel image. */
-        if (load_elf32_file(&kernel_file, cmd_line) 
-            < 0) 
-        {
-            printf("Fatal error while loading kernel. Aborting.\n");
+        if (hdr.ident[ELF_INDEX_CLASS] == ELF_CLASS_32) { 
+            load_elf32_file(&kernel_file, cmd_line);
+        } else {
+            load_elf64_file(&kernel_file, cmd_line);
         }
     }
+
+    printf("Fatal error while loading kernel. Aborting.\n");
 
     goto enter_filename;
 }

@@ -107,7 +107,7 @@ void load_lzma(struct file *fp, uint32_t load_address, char *cmd_line)
     }
 
     /* kick into kernel: */
-    printf("\nStarting kernel at 0x%016x.\n", load_address);
+    printf("100\nStarting kernel at 0x%016x.\n\n", load_address);
     ((void (*)(uint32_t mem_sz, char *cmd_line))(load_address))
         (c_memsz(), cmd_line);
 }

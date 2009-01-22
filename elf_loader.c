@@ -63,7 +63,7 @@ void load_elf32_uninitialized_memory(uint32_t address, uint32_t length)
  * @param loader_addr address of the loader binary in memory
  * @return  
  */
-int load_elf32_file(struct file *fp, char *cmd_line)
+void load_elf32_file(struct file *fp, char *cmd_line)
 {
     struct elf32_header hdr;
     uint32_t mem_sz = 0;
@@ -77,20 +77,20 @@ int load_elf32_file(struct file *fp, char *cmd_line)
     {
         printf("Bad ELF magic found. Found: %#2x %#2x %#2x %#2x.\n",
             hdr.ident[0], hdr.ident[1], hdr.ident[2], hdr.ident[3]);
-        return -1;
+        return;
     }
     /* check machine class: */
     if (!hdr.ident[ELF_INDEX_CLASS] == ELF_CLASS_32)
     {
         printf("Invalid ELF machine class found. Found: %2x.\n",
             hdr.ident[ELF_INDEX_CLASS]);
-        return -1;
+        return;
     }
 
     /* check endianess: */
     if (hdr.ident[ELF_INDEX_DATA] != ELF_DATA_MSB) {
         printf("Non-big endian ELF file detected. Aborting load.\n");
-        return -1;
+        return;
     }
 
     if (hdr.ehsize != 52 /* bytes */) {
@@ -100,7 +100,7 @@ int load_elf32_file(struct file *fp, char *cmd_line)
 
     if (hdr.phnum == 0) {
         printf("Found zero segments in ELF file. Aborting load.\n");
-        return -1;
+        return;
     }
 
     int i;
@@ -142,8 +142,6 @@ int load_elf32_file(struct file *fp, char *cmd_line)
 
     ((void (*)(uint32_t mem_sz, char *cmd_line))(hdr.entry))
         (c_memsz(), cmd_line);
-
-    return -1; /* something failed, badly */
 }
 
 /**
@@ -187,7 +185,7 @@ void load_elf64_uninitialized_memory(uint64_t address, uint64_t length)
     }
 }
 
-int load_elf64_file(struct file *fp, char *cmd_line)
+void load_elf64_file(struct file *fp, char *cmd_line)
 {
     struct elf64_hdr hdr;
     uint32_t mem_sz = 0;
@@ -203,20 +201,20 @@ int load_elf64_file(struct file *fp, char *cmd_line)
     {
         printf("Bad ELF magic found. Found: %#2x %#2x %#2x %#2x.\n",
             hdr.e_ident[0], hdr.e_ident[1], hdr.e_ident[2], hdr.e_ident[3]);
-        return -1;
+        return;
     }
     /* check machine class: */
     if (!hdr.e_ident[ELF_INDEX_CLASS] == ELF_CLASS_64)
     {
         printf("Invalid ELF machine class found. Found: %2x.\n",
             hdr.e_ident[ELF_INDEX_CLASS]);
-        return -1;
+        return;
     }
 
     /* check endianess: */
     if (hdr.e_ident[ELF_INDEX_DATA] != ELF_DATA_MSB) {
         printf("Non-big endian ELF file detected. Aborting load.\n");
-        return -1;
+        return;
     }
 
     if (hdr.e_ehsize != 52 /* bytes */) {
@@ -226,7 +224,7 @@ int load_elf64_file(struct file *fp, char *cmd_line)
 
     if (hdr.e_phnum == 0) {
         printf("Found zero segments in ELF file. Aborting load.\n");
-        return -1;
+        return;
     }
 
     cilo_seek(fp, hdr.e_phoff, SEEK_SET);
@@ -249,5 +247,4 @@ int load_elf64_file(struct file *fp, char *cmd_line)
 
 
 
-    return -1;
 }
