@@ -30,6 +30,17 @@ LDFLAGS=-Ttext ${TEXTADDR}
 # endif
 # LDFLAGS=-Ttext=${TEXTADDR}
 
+# Configuration for the Cisco 7200 Series Routers
+# TARGET=c7200
+# MACHCODE=0x19
+# TEXTADDR=0x80008000
+# LOADADDR=0x80028000
+# ifndef CROSS_COMPILE
+# CROSS_COMPILE=mips-elf-
+# endif
+# CFLAGS=-DDEBUG -mno-abicalls
+# LDFLAGS=-Ttext ${TEXTADDR}
+
 # additional CFLAGS
 CFLAGS+=
 
